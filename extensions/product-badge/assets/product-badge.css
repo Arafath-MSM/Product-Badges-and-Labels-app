@@ -1,0 +1,23 @@
+.badge-studio-slot {
+  display: flex;
+  width: 100%;
+  min-height: 2.5rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.badge-studio-slot--top-right,
+.badge-studio-slot--bottom-right { justify-content: flex-end; }
+.badge-studio-slot--bottom-left,
+.badge-studio-slot--bottom-right { align-items: flex-end; }
+.badge-studio {
+  display: inline-flex;
+  padding: .45em .75em;
+  background: var(--badge-bg);
+  color: var(--badge-color);
+  border-radius: var(--badge-radius);
+  font-size: var(--badge-size);
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+@media (max-width: 749px) { .badge-studio { font-size: min(var(--badge-size), 16px); } }

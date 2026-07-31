@@ -1,0 +1,22 @@
+{% liquid
+  assign badge = product.metafields.badge_studio.badge.value
+%}
+{% if product and badge.label != blank %}
+  <div class="badge-studio-slot badge-studio-slot--{{ badge.position | default: 'top-left' }}">
+    <div class="badge-studio"
+      style="--badge-bg: {{ badge.backgroundColor | default: '#111827' }}; --badge-color: {{ badge.textColor | default: '#ffffff' }}; --badge-size: {{ badge.fontSize | default: 14 }}px; --badge-radius: {{ badge.borderRadius | default: 6 }}px;"
+      role="status">
+      {{ badge.label | escape }}
+    </div>
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Product badge",
+  "target": "section",
+  "enabled_on": { "templates": ["product"] },
+  "stylesheet": "product-badge.css",
+  "settings": []
+}
+{% endschema %}
