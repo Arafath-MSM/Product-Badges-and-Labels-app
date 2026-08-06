@@ -8,6 +8,6 @@ Shopify provides data needed to install, authenticate, and operate the app. Badg
 
 Service providers used for production hosting and database storage may process this limited merchant data on our behalf. Data is retained while the app is installed and only as needed for security, legal, and operational obligations afterward.
 
-Merchants can request access, correction, or deletion by contacting: **REPLACE_WITH_SUPPORT_EMAIL**.
+Merchants can request access, correction, or deletion by contacting: **msmarafath1@gmail.com**.
 
-Before publication, replace this contact address and have this policy reviewed for your business, hosting provider, country, and actual data practices.
+Operator: Zyrace, Sri Lanka. Public policy URL: https://product-badges-and-labels-app.onrender.com/privacy

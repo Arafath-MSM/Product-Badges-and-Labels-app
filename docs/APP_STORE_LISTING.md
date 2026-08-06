@@ -30,6 +30,15 @@ product badge, product label, sale badge, bestseller, new arrival
 ## Reviewer test instructions
 Install the app on a development store with at least one product. Create a badge, select that product, then add the Product badge app block to the product template. Visit the selected product to verify the badge. Delete the badge to verify it disappears.
 
+## Public URLs
+- Privacy policy: https://product-badges-and-labels-app.onrender.com/privacy
+- Terms of service: https://product-badges-and-labels-app.onrender.com/terms
+- Support: https://product-badges-and-labels-app.onrender.com/support
+- Documentation: https://product-badges-and-labels-app.onrender.com/documentation
+- Support email: msmarafath1@gmail.com
+- Developer: Zyrace, Sri Lanka
+- Pricing: Free
+
 ## Listing assets still required
 - App icon: 1200 × 1200 px, no text or transparency.
 - At least three desktop screenshots showing creation, product selection, and storefront output.
