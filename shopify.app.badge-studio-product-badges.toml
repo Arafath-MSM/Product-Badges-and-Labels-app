@@ -2,7 +2,7 @@
 
 client_id = "d1e563762fc7fd376474e544310d8589"
 name = "Badge Studio – Product Badges"
-application_url = "https://shopify.dev/apps/default-app-home"
+application_url = "https://product-badges-and-labels-app.onrender.com"
 embedded = true
 
 [build]
@@ -37,4 +37,4 @@ api_version = "2026-10"
 scopes = "read_products,write_products"
 
 [auth]
-redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
+redirect_urls = [ "https://product-badges-and-labels-app.onrender.com/auth/callback" ]
