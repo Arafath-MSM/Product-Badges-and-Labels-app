@@ -11,8 +11,8 @@ CREATE TABLE "Badge" (
     "fontSize" INTEGER NOT NULL DEFAULT 14,
     "borderRadius" INTEGER NOT NULL DEFAULT 6,
     "enabled" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateIndex
