@@ -29,6 +29,17 @@ async function publishProductBadges(admin: unknown, productIds: string[], badge:
   if (errors.length) throw new Error(errors.map((error) => error.message).join(", "));
 }
 
+async function findAssignedProducts(shop: string, products: SelectedProduct[], excludeBadgeId?: string) {
+  const badges = await db.badge.findMany({
+    where: { shop, ...(excludeBadgeId ? { id: { not: excludeBadgeId } } : {}) },
+    select: { productIds: true },
+  });
+  const assignedIds = new Set(
+    badges.flatMap((badge) => (JSON.parse(badge.productIds) as SelectedProduct[]).map((product) => product.id)),
+  );
+  return products.filter((product) => assignedIds.has(product.id));
+}
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const badges = await db.badge.findMany({ where: { shop: session.shop }, orderBy: { createdAt: "desc" } });
@@ -45,6 +56,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!badge) return { ok: false, message: "Badge not found." };
     const products = JSON.parse(badge.productIds) as SelectedProduct[];
     const enabled = !badge.enabled;
+    if (enabled) {
+      const conflicts = await findAssignedProducts(session.shop, products, badge.id);
+      if (conflicts.length) {
+        return { ok: false, message: `Remove these products from another badge first: ${conflicts.map((product) => product.title).join(", ")}.` };
+      }
+    }
     const appearance = enabled ? {
       label: badge.label,
       position: badge.position,
@@ -71,6 +88,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const label = String(form.get("label") || "").trim();
   const products = JSON.parse(String(form.get("products") || "[]")) as SelectedProduct[];
   if (!name || !label || !products.length) return { ok: false, message: "Add a name, label, and at least one product." };
+
+  const editingBadgeId = intent === "update" ? String(form.get("id")) : undefined;
+  const conflicts = await findAssignedProducts(session.shop, products, editingBadgeId);
+  if (conflicts.length) {
+    return {
+      ok: false,
+      message: `Each product can have one badge. Already assigned: ${conflicts.map((product) => product.title).join(", ")}.`,
+    };
+  }
 
   const appearance = {
     label,
