@@ -1,3 +1,7 @@
 .cache
+.env
+.env.*
+.git
+.shopify
 build
 node_modules
