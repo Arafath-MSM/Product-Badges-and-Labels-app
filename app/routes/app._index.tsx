@@ -5,6 +5,7 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { FREE_ACTIVE_BADGE_LIMIT, getPlanEntitlement } from "../billing.server";
 
 type SelectedProduct = { id: string; title: string };
 type GraphqlResult = { data?: { metafieldsSet?: { userErrors?: Array<{ message: string }> } } };
@@ -41,9 +42,18 @@ async function findAssignedProducts(shop: string, products: SelectedProduct[], e
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const badges = await db.badge.findMany({ where: { shop: session.shop }, orderBy: { createdAt: "desc" } });
-  return { badges: badges.map((badge) => ({ ...badge, productIds: JSON.parse(badge.productIds) as SelectedProduct[] })) };
+  const { admin, session } = await authenticate.admin(request);
+  const [badges, entitlement, activeBadgeCount] = await Promise.all([
+    db.badge.findMany({ where: { shop: session.shop }, orderBy: { createdAt: "desc" } }),
+    getPlanEntitlement(admin),
+    db.badge.count({ where: { shop: session.shop, enabled: true } }),
+  ]);
+  return {
+    badges: badges.map((badge) => ({ ...badge, productIds: JSON.parse(badge.productIds) as SelectedProduct[] })),
+    entitlement,
+    activeBadgeCount,
+    freeBadgeLimit: FREE_ACTIVE_BADGE_LIMIT,
+  };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -57,6 +67,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const products = JSON.parse(badge.productIds) as SelectedProduct[];
     const enabled = !badge.enabled;
     if (enabled) {
+      const [entitlement, activeBadgeCount] = await Promise.all([
+        getPlanEntitlement(admin),
+        db.badge.count({ where: { shop: session.shop, enabled: true } }),
+      ]);
+      if (!entitlement.isPremium && activeBadgeCount >= FREE_ACTIVE_BADGE_LIMIT) {
+        return { ok: false, message: `The Free plan supports ${FREE_ACTIVE_BADGE_LIMIT} active badges. Upgrade to Premium for unlimited badges.` };
+      }
       const conflicts = await findAssignedProducts(session.shop, products, badge.id);
       if (conflicts.length) {
         return { ok: false, message: `Remove these products from another badge first: ${conflicts.map((product) => product.title).join(", ")}.` };
@@ -116,13 +133,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await db.badge.update({ where: { id: badge.id }, data: { name, productIds: JSON.stringify(products), ...appearance } });
     return { ok: true, message: "Badge updated." };
   }
+  const [entitlement, activeBadgeCount] = await Promise.all([
+    getPlanEntitlement(admin),
+    db.badge.count({ where: { shop: session.shop, enabled: true } }),
+  ]);
+  if (!entitlement.isPremium && activeBadgeCount >= FREE_ACTIVE_BADGE_LIMIT) {
+    return { ok: false, message: `The Free plan supports ${FREE_ACTIVE_BADGE_LIMIT} active badges. Upgrade to Premium for unlimited badges.` };
+  }
   await publishProductBadges(admin, products.map((product) => product.id), appearance);
   await db.badge.create({ data: { shop: session.shop, name, productIds: JSON.stringify(products), ...appearance } });
   return { ok: true, message: "Badge created and published to the selected products." };
 };
 
 export default function BadgeDashboard() {
-  const { badges } = useLoaderData<typeof loader>();
+  const { badges, entitlement, activeBadgeCount, freeBadgeLimit } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const shopify = useAppBridge();
@@ -158,6 +182,12 @@ export default function BadgeDashboard() {
   return (
     <s-page heading="Product badges">
       <s-button slot="primary-action" onClick={chooseProducts}>Select products</s-button>
+      <s-banner tone={entitlement.isPremium ? "success" : "info"} heading={entitlement.isPremium ? "Premium plan" : "Free plan"}>
+        {entitlement.isPremium
+          ? "Unlimited active badges are enabled."
+          : `${activeBadgeCount} of ${freeBadgeLimit} active badges used. `}
+        {!entitlement.isPremium ? <s-link href="/app/plans">View plans</s-link> : null}
+      </s-banner>
       <s-section heading={editingId ? "Edit badge" : "Create a badge"}>
         <Form method="post">
           <input type="hidden" name="intent" value={editingId ? "update" : "create"} />
